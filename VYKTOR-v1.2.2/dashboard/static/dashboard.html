@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Vyktor Dashboard v1.2.2-dev</title>
+<style>body{background:#0b0b0b;color:#e0e0e0;font-family:Arial, sans-serif;margin:20px;}
+h1{color:#00ffff}.status{margin-bottom:10px;opacity:.8}.task{background:#111;padding:10px;margin:10px 0;border-radius:8px;border:1px solid #222}
+.progress{height:10px;background:#333;border-radius:5px;margin-top:4px;overflow:hidden}.bar{height:10px;background:#00e0ff;width:0%;transition:width .3s}
+#log{max-height:300px;overflow:auto;background:#000;color:#0f0;padding:10px;border-radius:8px;font-family:monospace}.controls{margin:12px 0}</style></head>
+<body><h1>Vyktor Dashboard v1.2.2-dev</h1><div class="status" id="ws-status">WS: connecting...</div>
+<div class="controls"><button id="pauseBtn">Pause Feed</button></div><div id="tasks"></div><h2>Live Feed</h2><div id="log"></div>
+<script>
+let paused=false;document.getElementById("pauseBtn").onclick=()=>{paused=!paused;document.getElementById("pauseBtn").textContent=paused?"Resume Feed":"Pause Feed"};
+async function bootstrapSummary(){try{const r=await fetch('/api/summary');if(!r.ok)return;const j=await r.json();for (const [task,v] of Object.entries(j)){updateTask({task,gen:0,score:v.score??0,ok:v.ok??false,runtime:v.runtime??0,origin:v.origin??"seed"})}}catch{}}
+const statusEl=document.getElementById("ws-status");const ws=new WebSocket("ws://127.0.0.1:8765");ws.onopen=()=>statusEl.textContent="WS: connected";ws.onclose=()=>statusEl.textContent="WS: disconnected";ws.onerror=()=>statusEl.textContent="WS: error";
+function lineageDepth(origin){if(!origin)return 0;return (origin.match(/mut\(/g)||[]).length}
+function updateTask(t){if(!t.task)return;let c=document.getElementById(t.task);if(!c){c=document.createElement("div");c.id=t.task;c.className="task";c.innerHTML=`<h3>${t.task} <small id="${t.task}-depth" style="opacity:.7"></small></h3><div>Gen: <span id="${t.task}-gen">0</span></div><div>Score: <span id="${t.task}-score">0</span></div><div class='progress'><div id="${t.task}-bar" class='bar'></div></div>`;document.getElementById("tasks").appendChild(c)}if(typeof t.score==="number"){document.getElementById(t.task+"-gen").textContent=(t.gen??0);document.getElementById(t.task+"-score").textContent=t.score.toFixed(3);document.getElementById(t.task+"-bar").style.width=(Math.max(0,Math.min(1,t.score))*100)+"%";document.getElementById(t.task+"-depth").textContent="(depth "+lineageDepth(t.origin)+")"}}
+ws.onmessage=(m)=>{if(paused)return;try{const d=JSON.parse(m.data);if(d.event==="summary"){for (const [task,v] of Object.entries(d.data)){updateTask({task,gen:0,score:v.score??0,ok:v.ok??false,runtime:v.runtime??0,origin:v.origin??"seed"})}return}if(d.event==="task_start"){updateTask({task:d.task,gen:0,score:0})}if(d.event==="gen_tick"){updateTask(d)}const log=document.getElementById("log");log.textContent+=m.data+"\n";log.scrollTop=log.scrollHeight}catch{}};bootstrapSummary();
+</script></body></html>
