@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Vyktor Dashboard v1.2.1</title>
+<style>
+body{background:#0b0b0b;color:#e0e0e0;font-family:Arial, sans-serif;margin:20px;}
+h1{color:#00ffff;}
+.task{background:#111;padding:10px;margin:10px 0;border-radius:8px;border:1px solid #222;}
+.progress{height:10px;background:#333;border-radius:5px;margin-top:4px;overflow:hidden;}
+.bar{height:10px;background:#00e0ff;width:0%;transition:width 0.3s;}
+#log{max-height:300px;overflow:auto;background:#000;color:#0f0;padding:10px;border-radius:8px;font-family:monospace;}
+</style>
+</head>
+<body>
+<h1>Vyktor Dashboard v1.2.1</h1>
+<p>WebSocket live feed. Run <code>python3 vyktor.py</code> then open this page.</p>
+<div id="tasks"></div>
+<h2>Live Feed</h2>
+<div id="log"></div>
+<script>
+const ws = new WebSocket("ws://127.0.0.1:8765");
+function updateTask(t){
+  let c=document.getElementById(t.task);
+  if(!c){
+    c=document.createElement("div");
+    c.id=t.task; c.className="task";
+    c.innerHTML=`<h3>${t.task}</h3><div>Gen: <span id="${t.task}-gen">0</span></div>
+    <div>Score: <span id="${t.task}-score">0</span></div>
+    <div class='progress'><div id="${t.task}-bar" class='bar'></div></div>`;
+    document.getElementById("tasks").appendChild(c);
+  }
+  if(t.score!==undefined){
+    document.getElementById(t.task+"-gen").textContent=t.gen;
+    document.getElementById(t.task+"-score").textContent=t.score.toFixed(3);
+    document.getElementById(t.task+"-bar").style.width=(t.score*100)+"%";
+  }
+}
+ws.onmessage=(msg)=>{
+  try{
+    const d=JSON.parse(msg.data);
+    if(d.event==="eval_error") return;
+    updateTask(d);
+    const log=document.getElementById("log");
+    log.textContent += msg.data+"\n";
+    log.scrollTop = log.scrollHeight;
+  }catch(e){}
+};
+</script>
+</body>
+</html>
