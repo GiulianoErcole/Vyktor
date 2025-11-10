@@ -3,7 +3,20 @@
 
 
 ### Next Planned
-##TBA
+
+## TBA
+
+---
+
+## v1.2.2 — Live & Loud
+- Added continuous gen_tick events every generation
+- Added session start header to live feed
+- Added /api/summary endpoint and snapshot bootstrap for dashboard
+- Dashboard replays last 50 log lines on connect
+- New UI: pause/resume feed, lineage depth display, and status indicator
+- Hardened log tailer (handles truncation and rotation)
+- Fixed parallel evaluation write-back issue
+- Minor code cleanup and stability improvements
   
 ---
 
