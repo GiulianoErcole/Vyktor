@@ -3,7 +3,19 @@
 
 
 ### Next Planned
-**v1.2 — Distributed Evolution Update**
+##TBA
+  
+---
+
+## v1.2.1 - Stability & Insight
+- Fixed parallel evaluation write-back bug
+- WebSocket live dashboard (real-time)
+- Updated docs and quickstart
+
+---
+
+## v1.2 — Distributed Evolution Update
+**Date:** November 2025
 - Parallelized mutation via multi-core scheduling  
 - Persistent “gene pool” between runs  
 - Docker-based sandboxing  
