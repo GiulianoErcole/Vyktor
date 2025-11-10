@@ -8,7 +8,7 @@
 ## ⚙️ Overview  
 
 **Vyktor** is an experimental research system that explores the frontier between **artificial intelligence**, **evolutionary computation**, and **autonomous software design**.  
-Rather than relying on static training data or human-defined logic, Vyktor begins with small, functional examples and **evolves them** through thousands of micro-mutations — adapting, refining, and sometimes discovering unexpected optimizations.
+Rather than relying on static training data or human-defined logic, Vyktor begins with small, functional examples and **evolves them** through thousands of micro-mutations; adapting, refining, and sometimes discovering unexpected optimizations.
 
 Its objective is simple yet profound:  
 > *Can code improve itself?*
@@ -31,7 +31,7 @@ Over time, Vyktor can discover solutions that outperform the original seeds, bot
 ## 🧠 Philosophy  
 
 Where most AIs *learn from data*, Vyktor learns from *structure*.  
-It is a computational organism — a digital ecosystem of code that evolves under pressure.  
+It is a computational organism; a digital ecosystem of code that evolves under pressure.  
 
 Vyktor does not “learn” in the human sense. It **mutates, survives, and adapts**, guided only by performance feedback.  
 This project sits at the crossroads of:  
@@ -98,7 +98,7 @@ Example console output:
 ---
 
 ## 🌌 Vision
-Vyktor represents the next step toward self-directed computational intelligence — a system that no longer needs to be told how to improve, only what goal to pursue.
+Vyktor represents the next step toward self-directed computational intelligence; a system that no longer needs to be told how to improve, only what goal to pursue.
 Its long-term purpose is to lay the groundwork for systems capable of:
 
 🔁 Self-repair and adaptive refactoring
@@ -115,7 +115,7 @@ Its long-term purpose is to lay the groundwork for systems capable of:
 
 ## 🧭 Research Context
 Vyktor serves as a controlled simulation of open-ended evolution in a digital substrate.
-It explores how far adaptive systems can go without neural models or reinforcement learning — relying purely on syntax-driven self-modification.
+It explores how far adaptive systems can go without neural models or reinforcement learning; relying purely on syntax-driven self-modification.
 
 Its behavior provides valuable insights into:
 
