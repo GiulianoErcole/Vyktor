@@ -1,0 +1,51 @@
+# 🧬 VYKTOR — CHANGELOG
+### © 2025 NERON Intelligence Systems  
+
+
+### Next Planned
+**v1.2 — Distributed Evolution Update**
+- Parallelized mutation via multi-core scheduling  
+- Persistent “gene pool” between runs  
+- Docker-based sandboxing  
+- Web dashboard for monitoring generations  
+
+---
+
+## v1.1.1 — Evolutionary Refinement Update
+**Date:** November 2025  
+
+- Improved multi-objective scoring (correctness, speed, brevity)  
+- Added Top-K archival (stores top 5 candidates per task)  
+- Expanded population size and generations (12 × 80)  
+- Unified public + internal README documentation  
+- Enhanced mutation tracking (`mut(mut(seed))` lineage)  
+- General stability and logging improvements  
+
+---
+
+## v1.1 — NERON Integration Build
+**Date:** November 2025  
+
+- Rebranded under **NERON Intelligence Systems**  
+- Removed all external dependencies (`ast.unparse()` replaces `astor`)  
+- Added new seeds: `roman_to_int`, `levenshtein`, `lru_cache`  
+- Improved mutation safety and scoring accuracy  
+- Organized folder structure (`core/`, `data/`, `results/`)  
+- Added internal research README  
+
+---
+
+## v1.0 — Genesis Prototype
+**Date:** November 2025  
+
+- Initial prototype demonstrating autonomous code mutation  
+- Implemented basic mutation, evaluation, and scoring  
+- Introduced early seeds: `sum_list`, `reverse_string`, `is_prime`  
+- Produced first working evolutionary runs  
+- Output logged to `results/vyktor_summary.json`
+
+---
+
+
+> “Evolution is not written — it is discovered.”  
+> — NERON Research Division, 2025
