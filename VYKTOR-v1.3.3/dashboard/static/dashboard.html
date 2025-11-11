@@ -1,0 +1,166 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>VYKTOR Dashboard — v1.3.3 DEV (DASH)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root{--bg:#0b0b0b;--panel:#111;--muted:#999;--text:#e8e8e8;--accent:#5ee2ff;--ok:#7CFC00;--warn:#ffd166;--bad:#ff6b6b}
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto}
+    header{padding:16px 20px;border-bottom:1px solid #1d1d1d;display:flex;gap:12px;align-items:center}
+    .badge{font-size:12px;color:#000;background:var(--accent);padding:4px 8px;border-radius:999px}
+    main{padding:18px;display:grid;grid-template-columns:1.2fr .8fr;gap:18px}
+    .card{background:var(--panel);border:1px solid #1c1c1c;border-radius:12px;box-shadow:0 0 0 1px #0e0e0e inset}
+    .card h3{margin:0;padding:12px 14px;border-bottom:1px solid #1a1a1a;font-size:14px;letter-spacing:.4px;color:#cfcfcf}
+    .card .body{padding:12px 14px}
+    canvas{width:100%;height:220px;background:#0d0d0d;border-radius:8px}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    th,td{padding:8px;border-bottom:1px solid #1a1a1a}
+    th{color:#c9c9c9;text-align:left}
+    .muted{color:var(--muted)}
+    footer{padding:10px 16px;color:#666;border-top:1px solid #1a1a1a;text-align:center;font-size:12px}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .pill{padding:4px 8px;border:1px solid #2a2a2a;border-radius:999px;font-size:12px;color:#c8c8c8}
+  </style>
+</head>
+<body>
+  <header>
+    <div style="font-weight:600">VYKTOR — Neural Evolution Engine</div>
+    <div class="badge">v1.3.3 DEV (DASH)</div>
+    <div class="pill" id="ports">ports: ...</div>
+    <div class="pill" id="ws_status">ws: connecting...</div>
+  </header>
+
+  <main>
+    <section class="card" style="grid-column:1/2">
+      <h3>Live Fitness — Best & Avg (by Generation)</h3>
+      <div class="body"><canvas id="fitnessChart"></canvas></div>
+    </section>
+
+    <section class="card" style="grid-column:2/3">
+      <h3>Seed Leaderboard (Top 10)</h3>
+      <div class="body">
+        <table id="leader">
+          <thead><tr><th>Rank</th><th>Seed</th><th>Score</th><th class="muted">Gen</th><th class="muted">OK%</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3>Runtime & Acceptance</h3>
+      <div class="body">
+        <div class="row">
+          <canvas id="runtimeChart"></canvas>
+          <canvas id="acceptChart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3>Telemetry Snapshot</h3>
+      <div class="body">
+        <pre id="snapshot" style="margin:0;background:#0f0f0f;padding:10px;border-radius:8px;white-space:pre-wrap;max-height:240px;overflow:auto">Loading...</pre>
+      </div>
+    </section>
+  </main>
+
+  <footer>© 2025 NERON Intelligence Systems — VYKTOR v1.3.3 DEV (DASH)</footer>
+
+  <script>
+  const W = (id)=>document.getElementById(id);
+
+  // Minimal chart drawer (no deps)
+  function LineChart(canvas, color="#5ee2ff"){
+    const ctx=canvas.getContext('2d');
+    const data=[];
+    function draw(){
+      const w=canvas.width=canvas.clientWidth*devicePixelRatio;
+      const h=canvas.height=canvas.clientHeight*devicePixelRatio;
+      ctx.clearRect(0,0,w,h);
+      // axes
+      ctx.strokeStyle="#222"; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(40,h-30); ctx.lineTo(w-10,h-30); ctx.lineTo(w-10,20); ctx.stroke();
+      if(data.length<2) return;
+      const xs=data.map(p=>p.x), ys=data.map(p=>p.y);
+      const xmin=Math.min(...xs), xmax=Math.max(...xs);
+      const ymin=0, ymax=Math.max(1, Math.max(...ys));
+      function sx(x){ return 40 + (x - xmin) * (w-60) / Math.max(1,(xmax-xmin)); }
+      function sy(y){ return (h-30) - (y - ymin) * (h-60) / Math.max(1,(ymax-ymin)); }
+      // grid
+      ctx.strokeStyle="#1a1a1a";
+      for(let i=0;i<=5;i++){ const gy=sy(i*(ymax/5)); ctx.beginPath(); ctx.moveTo(40,gy); ctx.lineTo(w-10,gy); ctx.stroke();}
+      // line
+      ctx.strokeStyle=color; ctx.lineWidth=2; ctx.beginPath();
+      data.forEach((p,i)=>{ const X=sx(p.x), Y=sy(p.y); if(i===0) ctx.moveTo(X,Y); else ctx.lineTo(X,Y); });
+      ctx.stroke();
+    }
+    function push(x,y){ data.push({x,y}); if(data.length>500) data.shift(); draw(); }
+    window.addEventListener('resize', draw);
+    draw();
+    return {push, draw};
+  }
+
+  const fitnessChart=LineChart(W('fitnessChart'), '#5ee2ff');
+  const runtimeChart=LineChart(W('runtimeChart'), '#ffd166');
+  const acceptChart=LineChart(W('acceptChart'), '#7CFC00');
+
+  async function refreshSnapshot(){
+    try{
+      const r = await fetch('/api/summary'); const j = await r.json();
+      W('snapshot').textContent = JSON.stringify(j, null, 2);
+    }catch(e){ /* ignore */ }
+  }
+
+  async function loadPorts(){
+    try{
+      const r = await fetch('/api/ports'); const j = await r.json();
+      W('ports').textContent = `ports: http ${j.http} / ws ${j.ws}`;
+    }catch(e){}
+  }
+
+  // Leaderboard
+  const leaders = new Map(); // key: seed -> {score, gen, ok_rate}
+  function renderLeaders(){
+    const rows=[...leaders.entries()].sort((a,b)=>b[1].score-a[1].score).slice(0,10);
+    const tbody = W('leader').querySelector('tbody');
+    tbody.innerHTML='';
+    rows.forEach(([seed,info],i)=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td>#${i+1}</td><td>${seed}</td><td>${info.score.toFixed(3)}</td><td class="muted">${info.gen}</td><td class="muted">${(info.ok_rate*100).toFixed(1)}%</td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function connectWS(){
+    fetch('/api/ports').then(r=>r.json()).then(p=>{
+      const ws = new WebSocket(`ws://${location.hostname}:${p.ws}`);
+      ws.onopen = ()=>{ W('ws_status').textContent='ws: live'; W('ws_status').style.color='#7CFC00'; };
+      ws.onclose= ()=>{ W('ws_status').textContent='ws: closed'; W('ws_status').style.color='#ff6b6b'; setTimeout(connectWS, 1500); };
+      ws.onmessage = (ev)=>{
+        try{
+          const msg = JSON.parse(ev.data);
+          if(msg && msg.event==='gen_tick'){
+            const g = msg.gen ?? 0;
+            const s = Number(msg.score ?? 0);
+            const rt = Number(msg.avg_runtime ?? msg.runtime ?? 0);
+            const okr = Number(msg.ok_rate ?? 0);
+            const task = msg.task || 'seed';
+            fitnessChart.push(g, s);
+            runtimeChart.push(g, rt);
+            acceptChart.push(g, okr);
+            const entry = leaders.get(task) || {score:0, gen:0, ok_rate:0};
+            if(s>entry.score) leaders.set(task, {score:s, gen:g, ok_rate:okr});
+            renderLeaders();
+          }
+        }catch(e){ /* ignore parse errors */ }
+      };
+    });
+  }
+
+  loadPorts();
+  refreshSnapshot(); setInterval(refreshSnapshot, 3000);
+  connectWS();
+  </script>
+</body>
+</html>
