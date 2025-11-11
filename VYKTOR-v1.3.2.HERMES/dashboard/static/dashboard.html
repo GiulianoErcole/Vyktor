@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Vyktor Dashboard</title>
+<style>
+:root{--c1:#00e0ff;--bg:#0b0b0b;--panel:#111;--muted:#222;}
+body{background:var(--bg);color:#e0e0e0;font-family:Arial, sans-serif;margin:20px;}
+h1{color:var(--c1);margin:0 0 8px 0}
+.badge{display:inline-block;background:#133239;color:#8fefff;border:1px solid #23515a;padding:2px 8px;border-radius:12px;font-size:12px;margin-left:8px}
+.grid{display:grid;grid-template-columns:1.2fr .8fr;gap:16px}
+.card{background:var(--panel);padding:12px;border:1px solid var(--muted);border-radius:8px}
+.task{background:#151515;padding:10px;margin:10px 0;border-radius:8px;border:1px solid var(--muted)}
+.progress{height:10px;background:#333;border-radius:5px;margin-top:4px;overflow:hidden}
+.bar{height:10px;background:var(--c1);width:0%;transition:width .3s}
+.small{opacity:.7;font-size:12px}
+#log{max-height:240px;overflow:auto;background:#000;color:#0f0;padding:10px;border-radius:8px;font-family:monospace}
+canvas{width:100%;height:160px;background:#0c0c0c;border:1px solid var(--muted);border-radius:8px}
+.header{display:flex;justify-content:space-between;align-items:center}
+</style></head>
+<body>
+<div class="header">
+  <div>
+    <h1 id="title">Vyktor</h1>
+    <div class="small">Uptime: <span id="uptime">0s</span> • WS: <span id="ws-status">connecting...</span></div>
+  </div>
+  <div class="badge">v1.3.0-DEV</div>
+</div>
+
+<div class="grid">
+  <div class="card">
+    <h3>Tasks</h3>
+    <div id="tasks"></div>
+    <h3>Live Feed</h3><div id="log"></div>
+  </div>
+  <div class="card">
+    <h3>Top-K Candidates</h3>
+    <div id="topk"></div>
+    <h3>Metrics</h3>
+    <div class="small">OK% and Avg Runtime (rolling)</div>
+    <canvas id="okChart"></canvas>
+    <canvas id="rtChart" style="margin-top:8px"></canvas>
+  </div>
+</div>
+<script>
+let ws; let wsStatus=document.getElementById('ws-status'); let boot=Date.now();
+function tickUptime(){ const s=Math.floor((Date.now()-boot)/1000); document.getElementById('uptime').textContent=s+'s'; }
+setInterval(tickUptime, 1000);
+
+async function connectWS(){
+  const ports=await fetch('/api/ports').then(r=>r.json()).catch(()=>({ws:8765}));
+  const cfg=await fetch('/api/config').then(r=>r.json()).catch(()=>({title:'Vyktor'}));
+  document.getElementById('title').textContent = cfg.title || 'Vyktor';
+  const url = 'ws://'+location.hostname+':'+ports.ws;
+  ws=new WebSocket(url);
+  ws.onopen=()=>wsStatus.textContent='connected';
+  ws.onclose=()=>{wsStatus.textContent='disconnected'; setTimeout(connectWS, 1500)};
+  ws.onerror=()=>wsStatus.textContent='error';
+  ws.onmessage=(msg)=>handleMsg(msg.data);
+}
+
+let okPts=[], rtPts=[]; const maxPts=120;
+function drawLine(canvas, pts, label){
+  const ctx=canvas.getContext('2d'); const dpr=window.devicePixelRatio||1;
+  canvas.width=canvas.clientWidth*dpr; canvas.height=canvas.clientHeight*dpr; ctx.scale(dpr,dpr);
+  ctx.clearRect(0,0,canvas.clientWidth,canvas.clientHeight); ctx.strokeStyle='#00e0ff'; ctx.beginPath();
+  if(!pts.length) return; const xmax=Math.max(1, pts.length-1);
+  const ymin=Math.min(...pts), ymax=Math.max(...pts); const pad=8, W=canvas.clientWidth-2*pad, H=canvas.clientHeight-2*pad;
+  const mapx=i=>pad+(i/xmax)*W; const mapy=v=>{const a=ymin===ymax?1:(v-ymin)/(ymax-ymin); return pad+H-a*H};
+  ctx.moveTo(mapx(0),mapy(pts[0])); for(let i=1;i<pts.length;i++) ctx.lineTo(mapx(i),mapy(pts[i])); ctx.stroke(); ctx.fillStyle='#e0e0e0'; ctx.fillText(label, pad+4, pad+12);
+}
+function lineageDepth(origin){ if(!origin) return 0; return (origin.match(/mut\-/g)||[]).length; }
+function updateTaskCard(d){
+  let c=document.getElementById(d.task);
+  if(!c){ c=document.createElement('div'); c.id=d.task; c.className='task';
+    c.innerHTML=`<strong>${d.task}</strong> <span class="small" id="${d.task}-depth"></span>
+      <div>Gen: <span id="${d.task}-gen">0</span></div>
+      <div>Score: <span id="${d.task}-score">0</span></div>
+      <div class='progress'><div id="${d.task}-bar" class='bar'></div></div>`;
+    document.getElementById('tasks').appendChild(c);
+  }
+  if(typeof d.score==='number'){
+    document.getElementById(d.task+'-gen').textContent=(d.gen??0);
+    document.getElementById(d.task+'-score').textContent=d.score.toFixed(3);
+    document.getElementById(d.task+'-bar').style.width=(Math.max(0,Math.min(1,d.score))*100)+'%';
+    document.getElementById(d.task+'-depth').textContent='(depth '+lineageDepth(d.origin)+')';
+  }
+}
+function log(line){ const el=document.getElementById('log'); el.textContent += line+"\n"; el.scrollTop=el.scrollHeight; }
+function handleMsg(m){
+  try{
+    const d=JSON.parse(m);
+    if(d.event==='task_start'){ updateTaskCard({task:d.task,gen:0,score:0}); }
+    if(d.event==='gen_tick'){
+      updateTaskCard(d);
+      if(typeof d.ok_rate==='number'){ okPts.push(d.ok_rate); if(okPts.length>maxPts) okPts.shift(); drawLine(document.getElementById('okChart'), okPts, 'OK Rate'); }
+      if(typeof d.avg_runtime==='number'){ rtPts.push(d.avg_runtime); if(rtPts.length>maxPts) rtPts.shift(); drawLine(document.getElementById('rtChart'), rtPts, 'Avg Runtime (s)'); }
+    }
+    log(m);
+  }catch(e){}
+}
+connectWS();
+</script>
+</body></html>

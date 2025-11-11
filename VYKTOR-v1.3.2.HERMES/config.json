@@ -1,0 +1,28 @@
+{
+  "mutation": {
+    "binop_rate": 0.2,
+    "compare_rate": 0.25,
+    "const_rate": 0.15,
+    "for_step_rate": 0.1,
+    "const_delta_min": -2,
+    "const_delta_max": 2
+  },
+  "evolution": {
+    "objective": "pareto",
+    "rounds": 30,
+    "pop_size": 12,
+    "base_timeout": 0.3,
+    "timeout_scale_min": 0.7,
+    "timeout_scale_max": 1.2,
+    "survivors": 5
+  },
+  "bandits": {
+    "enabled": true,
+    "epsilon": 0.1,
+    "lr": 0.05
+  },
+  "dashboard": {
+    "replay_lines": 120,
+    "title": "Vyktor v1.3.0-DEV (Trident)"
+  }
+}
