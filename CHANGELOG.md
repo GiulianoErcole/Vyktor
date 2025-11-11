@@ -6,6 +6,16 @@
 
 ---
 
+## v1.3.3-DEV — Dashboard Upgrade (Live charts + Leaderboard)
+- New `/dashboard.html` with live charts for Fitness, Runtime, Acceptance (no external JS deps)
+- WebSocket-driven Top-10 seed leaderboard by best fitness score
+- Telemetry snapshot panel refreshes every 3s (`/api/summary`)
+- Version banner bumped to v1.3.3 DEV (DASH); honors `--dev` ports
+
+
+---
+
+
 ## v1.3.2-DEV PATCH2 — Consolidated Fix
 - Includes PATCH1 fitness import fix in core/scheduler.py
 - Ensures dashboard/server reads ports from env and prints version banner
