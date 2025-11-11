@@ -4,7 +4,29 @@
 
 ### Next Planned
 
+
 ---
+
+
+## v1.3.2-DEV — Project HERMES (Adaptive Fitness + PyTorch)
+- Added multi-objective fitness combiner (`core/fitness.py`) and seed adapter
+- Scheduler logs per-seed fitness; dashboard gets richer metrics
+- New seeds: `autoencoder_seed.py` (PyTorch), `rle_codec.py`, `opt_entropy_seed.py`
+- Dev ports: HTTP 8082 / WS 8767 (setup with `bash setup.sh --dev`)
+- Requirements: PyTorch, NumPy, Matplotlib, sqlite-utils
+
+
+---
+
+
+## v1.3.1 — Seed Expansion (FULL)
+- Integrated research-grade seeds: Huffman, LZ77, DPCM, Rabin–Karp, Bloom Filter, Karger Min-Cut,
+  K-Means, TSP (SA), Symbolic Regression.
+- Engine: same as v1.3.0-DEV (Trident, PATCH3) with telemetry + stable dashboard.
+
+
+---
+
 
 ## v1.3.0-DEV — Trident (PATCH1)
 - Fixed server global/port state; added /api/ports and reconnection logic
