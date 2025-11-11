@@ -1,0 +1,21 @@
+{
+  "mutation": {
+    "binop_rate": 0.2,
+    "compare_rate": 0.25,
+    "const_rate": 0.15,
+    "for_step_rate": 0.1,
+    "const_delta_min": -2,
+    "const_delta_max": 2
+  },
+  "evolution": {
+    "rounds": 80,
+    "pop_size": 12,
+    "base_timeout": 1.0,
+    "timeout_scale_min": 0.75,
+    "timeout_scale_max": 1.5,
+    "survivors": 3
+  },
+  "dashboard": {
+    "replay_lines": 50
+  }
+}
