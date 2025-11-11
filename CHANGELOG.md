@@ -4,6 +4,13 @@
 
 ### Next Planned
 
+---
+
+## v1.3.2-DEV PATCH2 — Consolidated Fix
+- Includes PATCH1 fitness import fix in core/scheduler.py
+- Ensures dashboard/server reads ports from env and prints version banner
+- Adds VERSION.txt
+
 
 ---
 
